@@ -4,7 +4,9 @@ import math
 
 pygame.init()
 
-# Screen dimensions
+info = pygame.display.Info() # You have to call this before pygame.display.set_mode()
+screen_width,screen_height = info.current_w,info.current_h
+#WIDTH, HEIGHT = screen_width-50, screen_height-50
 WIDTH, HEIGHT = 800, 600
 
 # Colors
@@ -26,14 +28,13 @@ class Entity:
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
         self.velocity.scale_to_length(MAX_SPEED)
-        self.desired_velocity = self.velocity  # Add desired_velocity to handle gradual turns.
+        self.desired_velocity = self.velocity 
         self.edge_force = pygame.Vector2(0, 0)
         self.separation_force = pygame.Vector2(0, 0)
         self.desired_pos = pygame.Vector2(0, 0)
         self.vel = pygame.Vector2(0, 0)
 
     def update(self, flock, mouse_pos, scatter):
-        # Compute the desired velocity based on flocking behavior
         average_velocity = pygame.Vector2(0, 0)
         average_position = pygame.Vector2(0, 0)
         average_separation = pygame.Vector2(0, 0)
@@ -60,7 +61,6 @@ class Entity:
         self.edge_force = self.wrap_edges()        
         
 
-        # Adjust desired velocity based on flocking rules
         self.desired_velocity = self.velocity +  self.edge_force
 
         if num_neighbors_per > 0 :
@@ -70,10 +70,8 @@ class Entity:
             average_velocity /= num_neighbors_per
             average_position /= (num_neighbors_per)
             self.desired_velocity -= (average_velocity * 0.1)
-            #self.desired_velocity -= (average_position)
 
         if num_neighbors_sep > 0 :
-            #average_separation = average_separation / num_neighbors_sep
             self.desired_velocity += (average_separation * 1)
             
         self.separation_force = average_separation
@@ -94,10 +92,8 @@ class Entity:
 
         if self.desired_velocity.length() > MAX_SPEED:
             self.desired_velocity.scale_to_length(MAX_SPEED)
-        # Gradually move velocity toward desired_velocity
         self.velocity = self.velocity.lerp(self.desired_velocity, TURN_RATE)
 
-        # Update position
         self.position += self.velocity
 
     def wrap_edges(self):
