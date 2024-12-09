@@ -32,7 +32,7 @@ class Entity:
         self.desired_pos = pygame.Vector2(0, 0)
         self.vel = pygame.Vector2(0, 0)
 
-    def update(self, flock):
+    def update(self, flock, mouse_pos, scatter):
         # Compute the desired velocity based on flocking behavior
         average_velocity = pygame.Vector2(0, 0)
         average_position = pygame.Vector2(0, 0)
@@ -79,6 +79,17 @@ class Entity:
         self.separation_force = average_separation
         self.desired_pos = average_position
         self.vel = average_velocity
+
+        if scatter == 2:
+            direction_from_mouse = self.position - mouse_pos
+            if direction_from_mouse.length() > 0:
+                direction_from_mouse.scale_to_length(1)  
+            self.desired_velocity += direction_from_mouse * 1
+        elif scatter == 1:
+            direction_to_mouse = mouse_pos - self.position
+            if direction_to_mouse.length() > 0:
+                direction_to_mouse.scale_to_length(1) 
+            self.desired_velocity += direction_to_mouse * 0.5  
         
 
         if self.desired_velocity.length() > MAX_SPEED:
@@ -107,20 +118,16 @@ class Entity:
         return math.sqrt((self.position.x - other.position.x) ** 2 + (self.position.y - other.position.y) ** 2)
 
 
-# Create the flock
 flock = [Entity(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_ENTITIES)]
 
-# Initialize the screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Ribja Simulacija")
 
 def draw_fish(screen, position, velocity):
-    # Calculate the angle of rotation based on velocity
-    angle = math.degrees(math.atan2(-velocity.y, velocity.x))  # Negative y to align with pygame's coordinates
+    angle = math.degrees(math.atan2(-velocity.y, velocity.x)) 
     
-    # Create a surface for the fish
-    fish_surface = pygame.Surface((30, 20), pygame.SRCALPHA)  # Width 30, Height 15
-    fish_surface.fill((0, 0, 0, 0))  # Transparent background
+    fish_surface = pygame.Surface((30, 20), pygame.SRCALPHA)  
+    fish_surface.fill((0, 0, 0, 0)) 
     
     
     # Draw fins (triangles)
@@ -129,39 +136,38 @@ def draw_fish(screen, position, velocity):
     pygame.draw.polygon(fish_surface, fin_color, [(13, 15), (7, 20), (10, 10)])  # Right fin
     pygame.draw.polygon(fish_surface, fin_color, [(0, 5), (0, 15), (20, 10)])  # Tail fin
 
-    # Draw the ellipse (body)
-    pygame.draw.ellipse(fish_surface, (255, 147, 20), (0, 5, 20, 10))  # Ellipse slightly offset
-    # Rotate the surface to align with the velocity direction
+    pygame.draw.ellipse(fish_surface, (255, 147, 20), (0, 5, 20, 10))
     rotated_surface = pygame.transform.rotate(fish_surface, angle)
     rotated_rect = rotated_surface.get_rect(center=(int(position.x), int(position.y)))
 
-    # Draw the rotated fish onto the main screen
     screen.blit(rotated_surface, rotated_rect)
 
 
 def main():
     running = True
     clock = pygame.time.Clock()
-
+    scatter = False  
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  
+                    scatter = (scatter + 1) % 3
+
+        mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
 
         screen.fill(OCEAN)
 
         for entity in flock:
-            entity.update(flock)
-
+            entity.update(flock, mouse_pos, scatter) 
             draw_fish(screen, entity.position, entity.velocity)
-            #pygame.draw.line(screen, (255, 0, 0), entity.position, entity.position + entity.separation_force * 30, 1)
-            #pygame.draw.line(screen, (0,255,0), entity.position, entity.desired_pos, 1)
-            #pygame.draw.line(screen, (255, 255, 255), entity.position, entity.position + entity.vel * 30, 1)
 
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
+
 
 
 if __name__ == "__main__":
