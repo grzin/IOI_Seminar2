@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 
+# asistentovi komentarji: naredi da se ribe prilagodijo roki. se pravi ne samo da se zberejo okoli točke ampak, da se dotikajo prstov in dlani.
+
 pygame.init()
 
 info = pygame.display.Info() # You have to call this before pygame.display.set_mode()
