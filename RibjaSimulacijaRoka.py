@@ -194,7 +194,7 @@ def main():
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 hand_pos = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-                hand_pos = pygame.Vector2(hand_pos.x * WIDTH, hand_pos.y * HEIGHT)
+                hand_pos = pygame.Vector2(hand_pos.y * WIDTH, hand_pos.x * HEIGHT)
 
         # Create a Pygame surface from the frame
         frame_surface = pygame.surfarray.make_surface(frame)
