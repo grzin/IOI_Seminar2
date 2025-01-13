@@ -141,7 +141,7 @@ def draw_fish(screen, position, velocity, frame_count):
     
     # Animate fins by changing their positions slightly over time
     fin_offset = math.sin(frame_count * 0.1) * 6
-    tail_offset = math.sin(frame_count * 0.2) * 6
+    tail_offset = math.sin(frame_count * 0.05) * 6
     
     # Draw fins (triangles)
     fin_color = (235, 117, 10)
