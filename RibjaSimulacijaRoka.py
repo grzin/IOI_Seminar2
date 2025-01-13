@@ -17,7 +17,7 @@ WIDTH, HEIGHT = 800, 600
 OCEAN = (200, 200, 200)
 
 # Flocking parameters
-NUM_ENTITIES = 20
+NUM_ENTITIES = 50
 MAX_SPEED = 2
 PERCEPTION_RADIUS = 200
 SEPARATION_DISTANCE = 50
@@ -44,7 +44,8 @@ class Entity:
         self.desired_pos = pygame.Vector2(0, 0)
         self.vel = pygame.Vector2(0, 0)
         self.rand = random.randint(0, 360)
-        self.assigned_landmark = None
+        self.assigned_landmark = random.randint(0, 20)
+        self.hand_number = random.randint(0, 10)
 
 
     def update(self, flock, mouse_pos, scatter):
@@ -158,8 +159,11 @@ def draw_fish(screen, position, velocity, frame_count):
 def main():
     running = True
     clock = pygame.time.Clock()
-    scatter = False
+    scatter = 1
     frame_count = 0
+    landmark_history = {4: [], 8: [], 12: [], 16: [], 20: []}
+    scatter_timer = 0
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -190,28 +194,46 @@ def main():
         results = hands.process(frame)
         hand_pos = None
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                hand_pos = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-                hand_pos = pygame.Vector2(hand_pos.y * WIDTH, hand_pos.x * HEIGHT)
-
         # Create a Pygame surface from the frame
         frame_surface = pygame.surfarray.make_surface(frame)
 
         # Display the frame
         screen.blit(frame_surface, (0, 0))
-
-        print(hand_pos)
         
 
         for entity in flock:
+            if results.multi_hand_landmarks:
+                hand_landmarks = results.multi_hand_landmarks[0]
+                temp = hand_landmarks.landmark[entity.assigned_landmark]
+                hand_pos = pygame.Vector2(temp.y * WIDTH, temp.x * HEIGHT)
+                for idx in [4, 8, 12, 16, 20]:
+                    landmark = hand_landmarks.landmark[idx]
+                    landmark_history[idx].append(pygame.Vector2(landmark.x * WIDTH, landmark.y * HEIGHT))
+                    if len(landmark_history[idx]) > 5:
+                        landmark_history[idx].pop(0)
+                
+                if all(len(landmark_history[idx]) == 5 for idx in [4, 8, 12, 16, 20]):
+                    diffs = [landmark_history[idx][-1].distance_to(landmark_history[idx][0]) for idx in [4, 8, 12, 16, 20]]
+                    if all(diff > 50 for diff in diffs):
+                        scatter = 2
+                        scatter_timer = 150
+                if len(results.multi_hand_landmarks) > 1:
+                    hand_landmarks = results.multi_hand_landmarks[entity.hand_number % len(results.multi_hand_landmarks)]
+                    temp = hand_landmarks.landmark[entity.assigned_landmark]
+                    hand_pos = pygame.Vector2(temp.y * WIDTH, temp.x * HEIGHT)
             entity.update(flock, hand_pos, scatter if not hand_pos is None else 0) 
             draw_fish(screen, entity.position, entity.velocity, frame_count - entity.rand)
+        
+        
+        if scatter_timer > 0:
+            scatter_timer -= 1
+            scatter = 2
+        else:
+            scatter = 1
 
         # Update the display
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(60)
         frame_count += 1
 
     # Release the webcam and close windows
