@@ -140,8 +140,8 @@ def draw_fish(screen, position, velocity, frame_count):
     fish_surface.fill((0, 0, 0, 0)) 
     
     # Animate fins by changing their positions slightly over time
-    fin_offset = math.sin(frame_count * 0.1) * 6
-    tail_offset = math.sin(frame_count * 0.05) * 6
+    fin_offset = math.sin(frame_count * 0.15) * 6
+    tail_offset = math.sin(frame_count * 0.1) * 6
     
     # Draw fins (triangles)
     fin_color = (235, 117, 10)
@@ -206,17 +206,19 @@ def main():
                 hand_landmarks = results.multi_hand_landmarks[0]
                 temp = hand_landmarks.landmark[entity.assigned_landmark]
                 hand_pos = pygame.Vector2(temp.y * WIDTH, temp.x * HEIGHT)
-                for idx in [4, 8, 12, 16, 20]:
-                    landmark = hand_landmarks.landmark[idx]
-                    landmark_history[idx].append(pygame.Vector2(landmark.x * WIDTH, landmark.y * HEIGHT))
-                    if len(landmark_history[idx]) > 5:
-                        landmark_history[idx].pop(0)
-                
-                if all(len(landmark_history[idx]) == 5 for idx in [4, 8, 12, 16, 20]):
-                    diffs = [landmark_history[idx][-1].distance_to(landmark_history[idx][0]) for idx in [4, 8, 12, 16, 20]]
-                    if all(diff > 50 for diff in diffs):
-                        scatter = 2
-                        scatter_timer = 150
+                if len(results.multi_hand_landmarks) == 1 and frame_count > 150:
+                    for idx in [4, 8, 12, 16, 20]:
+                        landmark = hand_landmarks.landmark[idx]
+                        landmark_history[idx].append(pygame.Vector2(landmark.x * WIDTH, landmark.y * HEIGHT))
+                        if len(landmark_history[idx]) > 5:
+                            landmark_history[idx].pop(0)
+                    
+                    if all(len(landmark_history[idx]) == 5 for idx in [4, 8, 12, 16, 20]):
+                        diffs = [landmark_history[idx][-1].distance_to(landmark_history[idx][0]) for idx in [4, 8, 12, 16, 20]]
+                        if all(diff > 50 for diff in diffs):
+                            scatter = 2
+                            scatter_timer = 150
+
                 if len(results.multi_hand_landmarks) > 1:
                     hand_landmarks = results.multi_hand_landmarks[entity.hand_number % len(results.multi_hand_landmarks)]
                     temp = hand_landmarks.landmark[entity.assigned_landmark]
